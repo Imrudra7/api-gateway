@@ -27,7 +27,7 @@ public class JwtService {
 
     public Claims validateAndGetClaims(String token) {
         try {
-            Claims claims = Jwts.parserBuilder()
+            return Jwts.parserBuilder()
                 .requireIssuer("maithilart-auth")
                 .requireAudience("maithilart-api")
                 .setSigningKey(key)
@@ -35,19 +35,7 @@ public class JwtService {
                 .parseClaimsJws(token)
                 .getBody();
 
-            // --- DEBUG PRINTS START ---
-            System.out.println("DEBUG: Token successfully validated!");
-            System.out.println("DEBUG: Subject (UserId) -> " + claims.getSubject());
-            System.out.println("DEBUG: Issuer -> " + claims.getIssuer());
-            System.out.println("DEBUG: Audience -> " + claims.getAudience());
-            System.out.println("DEBUG: Full Claims Map -> " + claims.toString());
-            // --- DEBUG PRINTS END ---
-
-            return claims;
-
         } catch (Exception e) {
-            // Agar yahan error aaya, toh iska matlab token mein issue hai
-            System.err.println("DEBUG ERROR: Token validation failed! Reason: " + e.getMessage());
             throw e; 
         }
     }

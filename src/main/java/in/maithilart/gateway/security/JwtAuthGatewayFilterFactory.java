@@ -20,6 +20,8 @@ import reactor.core.publisher.Mono;
 // 1. AbstractGatewayFilterFactory extend karna zaroori hai
 public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<JwtAuthGatewayFilterFactory.Config> {
 	private static final Logger log = LoggerFactory.getLogger(JwtAuthGatewayFilterFactory.class);
+	private static final List<String> TRUSTED_HEADERS = List.of("X-Gateway-Auth", "X-Internal-Secret", "X-User-Id",
+			"X-User-Email", "X-User-Full-Name", "X-Roles", "X-Token-Issuer");
 	private final JwtService jwtService;
 	private final ReactiveRedisTemplate<String, String> redisTemplate;
 
@@ -50,17 +52,12 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 			String token = null;
 			String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
 
-			log.info("Getting authHeader:" + authHeader);
-
 			if (authHeader != null && authHeader.startsWith("Bearer ")) {
 				token = authHeader.substring(7);
 			}
-			log.info("token:" + token);
 			if (token == null && request.getCookies().getFirst("accessToken") != null) {
 				token = request.getCookies().getFirst("accessToken").getValue();
-				log.info("Token found in Cookie: " + token);
 			}
-			log.info("token:" + token);
 
 			if (token == null) {
 				log.info("No token found in Header or Cookie");
@@ -82,9 +79,9 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 
 				try {
 					Claims claims = jwtService.validateAndGetClaims(finalToken);
-					log.info("Claims found: " + claims);
 					// Builder banake production headers set karo
 					ServerHttpRequest.Builder builder = request.mutate();
+					builder.headers(headers -> TRUSTED_HEADERS.forEach(headers::remove));
 
 					builder.header("X-Gateway-Auth", "verified");
 					builder.header("X-User-Id", claims.getSubject());
@@ -96,7 +93,6 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 					// Roles handle karo
 					List<String> roles = claims.get("roles", List.class);
 					if (roles != null) {
-						log.info("Gateway: X_roles-found: " + roles);
 						builder.header("X-Roles", String.join(",", roles));
 					}
 
