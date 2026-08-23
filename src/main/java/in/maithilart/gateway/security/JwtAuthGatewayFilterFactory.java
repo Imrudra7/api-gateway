@@ -39,6 +39,7 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 		return path.startsWith("/swagger") || path.startsWith("/v3/api-docs") || path.startsWith("/actuator");
 	}
 
+	@SuppressWarnings({ "null", "unchecked" })
 	@Override
 	public GatewayFilter apply(Config config) {
 
@@ -65,7 +66,21 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 			}
 
 			final String finalToken = token;
-			String jti = jwtService.extractId(finalToken);
+			final Claims claims;
+			final String jti;
+
+			try {
+				claims = jwtService.validateAndGetClaims(finalToken);
+				jti = claims.getId();
+			} catch (Exception e) {
+				log.info("Invalid JWT received. Rejecting request.");
+				return unauthorized(exchange);
+			}
+
+			if (jti == null || jti.isBlank()) {
+				log.info("JWT missing jti. Rejecting request.");
+				return unauthorized(exchange);
+			}
 
 			return redisTemplate.hasKey(jti).onErrorResume(ex -> {
 				log.info("Redis unavailable. Skipping blacklist check." + ex);
@@ -78,7 +93,6 @@ public class JwtAuthGatewayFilterFactory extends AbstractGatewayFilterFactory<Jw
 				}
 
 				try {
-					Claims claims = jwtService.validateAndGetClaims(finalToken);
 					// Builder banake production headers set karo
 					ServerHttpRequest.Builder builder = request.mutate();
 					builder.headers(headers -> TRUSTED_HEADERS.forEach(headers::remove));

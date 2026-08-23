@@ -17,6 +17,7 @@
 			return "rate:ip:" + getClientIp(exchange);
 		}
 	
+		@SuppressWarnings("null")
 		private String getClientIp(ServerWebExchange exchange) {
 	
 			String forwarded = exchange.getRequest().getHeaders().getFirst("X-Forwarded-For");

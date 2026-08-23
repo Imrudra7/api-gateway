@@ -15,6 +15,7 @@ public class GatewayRequestContextProvider implements RequestContextProvider {
 		this.exchange = provider.getIfAvailable();
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public String getHeader(String name) {
 		return exchange.getRequest().getHeaders().getFirst(name);
@@ -30,6 +31,7 @@ public class GatewayRequestContextProvider implements RequestContextProvider {
 		return exchange.getRequest().getMethod().name();
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public String getClientIp() {
 
@@ -56,6 +58,7 @@ public class GatewayRequestContextProvider implements RequestContextProvider {
 		return exchange.getRequest().getHeaders().getFirst("User-Agent");
 	}
 
+	@SuppressWarnings("null")
 	@Override
 	public String getContentType() {
 

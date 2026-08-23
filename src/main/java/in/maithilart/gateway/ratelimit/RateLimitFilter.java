@@ -7,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
+import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
@@ -28,6 +29,7 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
 		this.rateLimitService = rateLimitService;
 	}
 
+	@SuppressWarnings({ "null"})
 	@Override
 	public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
 
@@ -56,7 +58,12 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
 				""";
 
 		return exchange.getResponse()
-				.writeWith(Mono.just(exchange.getResponse().bufferFactory().wrap(body.getBytes())));
+				.writeWith(extracted(exchange, body));
+	}
+
+	@SuppressWarnings("null")
+	private Mono<DataBuffer> extracted(ServerWebExchange exchange,  String body) {
+		return Mono.just(exchange.getResponse().bufferFactory().wrap(body.getBytes()));
 	}
 
 	@Override
